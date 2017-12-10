@@ -1,0 +1,14 @@
+language: csharp
+mono: none
+dotnet: 2.0.0
+dist: trusty
+sudo: false
+
+notifications:
+  email: false
+
+install:
+  - dotnet restore --source "$NUGET_SOURCE_URL"
+
+script:
+  - dotnet build --version-suffix $(./scripts/ci/version-suffix.sh)

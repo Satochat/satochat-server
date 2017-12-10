@@ -2,8 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\Secrets\StrongNameKey.snk</AssemblyOriginatorKeyFile>
+    <Version />
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <Authors>Steffen André Langnes</Authors>
+    <Company />
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +20,7 @@
     <PackageReference Include="FluentValidation" Version="7.2.1" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.3" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="2.0.1" />
-    <PackageReference Include="Satochat.Shared" Version="1.0.0-dev.60" />
+    <PackageReference Include="Satochat.Shared" Version="1.0.0-ci.1.master.37edb13" />
   </ItemGroup>
 
   <ItemGroup>
