@@ -1,4 +1,4 @@
-﻿# Satochat server
+# Satochat server [![Build Status](https://travis-ci.org/Satochat/satochat-server.svg?branch=master)](https://travis-ci.org/Satochat/satochat-server)
 
 The server allowing Satochat clients to communicate with one another.
 
