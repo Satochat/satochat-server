@@ -8,14 +8,14 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using Satochat.Server.Data;
 using Satochat.Server.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Satochat.Server {
     public class Program {
         public static void Main(string[] args) {
             var host = BuildWebHost(args);
-            initializeDatabase(host);
+            migrateDatabase(host);
             host.Run();
         }
 
@@ -24,18 +24,16 @@ namespace Satochat.Server {
                 .UseStartup<Startup>()
                 .Build();
 
-        private static void initializeDatabase(IWebHost host) {
+        private static void migrateDatabase(IWebHost host) {
             using (var scope = host.Services.CreateScope()) {
                 var services = scope.ServiceProvider;
-                var env = services.GetRequiredService<IHostingEnvironment>();
+                var context = services.GetRequiredService<SatochatContext>();
                 try {
-                    if (env.IsDevelopment()) {
-                        var context = services.GetRequiredService<SatochatContext>();
-                        DbInitializer.Initialize(context);
-                    }
+                    context.Database.Migrate();
                 } catch (Exception ex) {
                     var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "An error occurred while seeding the database.");
+                    logger.LogError(ex, "An error occurred while migrating the database.");
+                    throw ex;
                 }
             }
         }
