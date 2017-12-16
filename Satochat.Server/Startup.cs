@@ -9,6 +9,8 @@ using Satochat.Server.Filters;
 using Satochat.Server.Services;
 using Microsoft.AspNetCore.ResponseCompression;
 using Satochat.Shared.Event;
+using System.Collections.Generic;
+using System;
 
 namespace Satochat.Server {
     public class Startup {
@@ -34,8 +36,7 @@ namespace Satochat.Server {
             //services.AddFluentValidation();
             //services.AddEntityFrameworkInMemoryDatabase();
             services.AddLogging();
-            services.AddDbContext<SatochatContext>(options =>
-                    options.UseMySql(Configuration.GetConnectionString("SatochatContextMySQL")));
+            addDbContext(services);
 
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<IMessageService, MessageService>();
@@ -60,6 +61,38 @@ namespace Satochat.Server {
                 }
             });
             app.UseMvc();
+        }
+
+        private void addDbContext(IServiceCollection services) {
+            string connectionString = Environment.GetEnvironmentVariable("SATOCHAT_DB_CONNECTION_STRING")?.ToLower();
+            if (string.IsNullOrEmpty(connectionString)) {
+                connectionString = Configuration.GetConnectionString("SatochatContext")?.ToLower();
+            }
+
+            if (string.IsNullOrEmpty(connectionString)) {
+                throw new InvalidOperationException("Cannot add database context when connection string is null/empty");
+            }
+
+            string databaseProviderName = Environment.GetEnvironmentVariable("SATOCHAT_DB_PROVIDER")?.ToLower();
+            if (string.IsNullOrEmpty(databaseProviderName)) {
+                databaseProviderName = Configuration.GetValue<string>("DatabaseProvider")?.ToLower();
+            }
+
+            if (string.IsNullOrEmpty(databaseProviderName)) {
+                throw new InvalidOperationException("Cannot add database context when database provider is null/empty");
+            }
+
+            var factory = new Dictionary<string, Action<DbContextOptionsBuilder>> {
+                { "sqlite", options => options.UseSqlite(connectionString) },
+                { "mysql", options => options.UseMySql(connectionString) }
+            };
+
+            if (!factory.ContainsKey(databaseProviderName)) {
+                throw new InvalidOperationException("Cannot add database context with unknown database provider");
+            }
+
+            var func = factory[databaseProviderName];
+            services.AddDbContext<SatochatContext>(func);
         }
     }
 }
