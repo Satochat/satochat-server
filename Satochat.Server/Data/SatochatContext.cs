@@ -13,7 +13,6 @@ namespace Satochat.Server.Models {
         public DbSet<User> Users { get; set; }
         public DbSet<UserCredential> UserCredentials { get; set; }
         public DbSet<UserFriend> UserFriends { get; set; }
-        public DbSet<UserFriendRequest> UserFriendRequest { get; set; }
         public DbSet<UserEvent> UserEvents { get; set; }
         public DbSet<UserPublicKey> UserPublicKeys { get; set; }
 
