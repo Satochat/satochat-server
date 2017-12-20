@@ -11,9 +11,10 @@ using System;
 namespace Satochat.Server.Migrations
 {
     [DbContext(typeof(SatochatContext))]
-    partial class SatochatContextModelSnapshot : ModelSnapshot
+    [Migration("20171216230913_RemoveUserFriendRequest")]
+    partial class RemoveUserFriendRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
