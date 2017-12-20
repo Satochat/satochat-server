@@ -7,6 +7,10 @@ sudo: false
 notifications:
   email: false
 
+cache:
+  directories:
+    - $HOME/.nuget/packages/
+
 install:
   - dotnet restore --source "$NUGET_SOURCE_URL"
 
