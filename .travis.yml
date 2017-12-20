@@ -11,4 +11,12 @@ install:
   - dotnet restore --source "$NUGET_SOURCE_URL"
 
 script:
-  - dotnet build --version-suffix $(./scripts/ci/version-suffix.sh)
+  - dotnet publish -c Release --version-suffix $(./scripts/ci/version-suffix.sh)
+  - docker build -t "$DOCKER_TAG" .
+
+deploy:
+  provider: script
+  script: ./scripts/ci/deploy-docker.sh
+  skip_cleanup: true
+  on:
+    branch: docker
