@@ -64,18 +64,18 @@ namespace Satochat.Server {
         }
 
         private void addDbContext(IServiceCollection services) {
-            string connectionString = Environment.GetEnvironmentVariable("SATOCHAT_DB_CONNECTION_STRING")?.ToLower();
+            string connectionString = Environment.GetEnvironmentVariable("SATOCHAT_DB_CONNECTION_STRING");
             if (string.IsNullOrEmpty(connectionString)) {
-                connectionString = Configuration.GetConnectionString("SatochatContext")?.ToLower();
+                connectionString = Configuration.GetConnectionString("SatochatContext");
             }
 
             if (string.IsNullOrEmpty(connectionString)) {
                 throw new InvalidOperationException("Cannot add database context when connection string is null/empty");
             }
 
-            string databaseProviderName = Environment.GetEnvironmentVariable("SATOCHAT_DB_PROVIDER")?.ToLower();
+            string databaseProviderName = Environment.GetEnvironmentVariable("SATOCHAT_DB_PROVIDER");
             if (string.IsNullOrEmpty(databaseProviderName)) {
-                databaseProviderName = Configuration.GetValue<string>("DatabaseProvider")?.ToLower();
+                databaseProviderName = Configuration.GetValue<string>("DatabaseProvider");
             }
 
             if (string.IsNullOrEmpty(databaseProviderName)) {

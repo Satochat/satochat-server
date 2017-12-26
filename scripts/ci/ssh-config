@@ -1,0 +1,11 @@
+Host {GATEWAY_HOST}
+HostName {WAN_HOST}
+User {GATEWAY_USER}
+IdentityFile {GATEWAY_IDENTITY_FILE}
+StrictHostKeyChecking no
+
+Host {APPSERVER_HOST}
+User {APPSERVER_USER}
+ProxyCommand ssh {GATEWAY_HOST} -W %h:%p
+IdentityFile {APPSERVER_IDENTITY_FILE}
+StrictHostKeyChecking no

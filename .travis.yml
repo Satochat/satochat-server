@@ -2,7 +2,15 @@ language: csharp
 mono: none
 dotnet: 2.0.0
 dist: trusty
-sudo: false
+sudo: required
+
+services:
+  - docker
+
+addons:
+  apt:
+    packages:
+      - docker-ce
 
 notifications:
   email: false
@@ -10,17 +18,15 @@ notifications:
 cache:
   directories:
     - $HOME/.nuget/packages/
+    - $HOME/docker/
 
-install:
-  - dotnet restore --source "$NUGET_SOURCE_URL"
+install: dotnet restore --source "$NUGET_SOURCE_URL"
 
-script:
-  - dotnet publish -c Release --version-suffix $(./scripts/ci/version-suffix.sh)
-  - docker build -t "$DOCKER_TAG" .
+script: ./scripts/ci/build-and-test.sh
 
 deploy:
-  provider: script
-  script: ./scripts/ci/deploy-docker.sh
-  skip_cleanup: true
-  on:
-    branch: master
+  - provider: script
+    script: ./scripts/ci/deploy.sh
+    skip_cleanup: true
+    on:
+      branch: master
