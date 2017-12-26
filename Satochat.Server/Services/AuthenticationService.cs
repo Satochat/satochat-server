@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Satochat.Server.Models;
-using Satochat.Server.Helper;
+using Satochat.Server.Shared.Helper;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using Microsoft.EntityFrameworkCore;

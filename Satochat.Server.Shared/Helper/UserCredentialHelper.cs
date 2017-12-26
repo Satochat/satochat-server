@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Satochat.Server.Helper {
+namespace Satochat.Server.Shared.Helper {
     public static class UserCredentialHelper {
 
         public static string GenerateSalt() {
@@ -34,7 +34,7 @@ namespace Satochat.Server.Helper {
         }
 
         public static string[] SplitSaltAndHash(string raw) {
-            return raw.Split(".", 2);
+            return raw.Split(new char[] { '.' }, 2);
         }
     }
 }
