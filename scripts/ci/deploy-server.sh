@@ -26,7 +26,7 @@ if [ $? = 0 ]; then
 fi
 
 echo "Creating container $containerName..."
-ssh "$DEPLOY_APPSERVER_SSH_HOST" "docker create --restart unless-stopped --name '$containerName' --add-host '$dbHostMapping' -p '$SATOCHAT_HTTP_PORT:5000' -e SATOCHAT_DB_PROVIDER='$SATOCHAT_DB_PROVIDER' -e SATOCHAT_DB_CONNECTION_STRING='$SATOCHAT_DB_CONNECTION_STRING' '$DOCKER_TAG'" || exit 1
+ssh "$DEPLOY_APPSERVER_SSH_HOST" "docker create --restart unless-stopped --name '$containerName' --add-host '$dbHostMapping' -p '$SATOCHAT_HTTP_PORT:5000' --mount 'type=bind,src=$DEPLOY_APPDATA_HOST_DIR,dst=$DEPLOY_APPDATA_CONTAINER_DIR' -e SATOCHAT_DB_PROVIDER='$SATOCHAT_DB_PROVIDER' -e SATOCHAT_DB_CONNECTION_STRING='$SATOCHAT_DB_CONNECTION_STRING' '$DOCKER_TAG'" || exit 1
 
 echo "Running container $containerName..."
 ssh "$DEPLOY_APPSERVER_SSH_HOST" "docker start '$containerName'" || exit 1
