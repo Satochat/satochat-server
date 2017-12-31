@@ -1,0 +1,14 @@
+version: "3.4"
+services:
+  app:
+    environment:
+      SATOCHAT_DB_PROVIDER: mysql
+      SATOCHAT_DB_CONNECTION_STRING: "Server=database;Database=satochat;Uid=satochat;Pwd=satochat;"
+    ports:
+      - 5000:5000
+  db:
+    environment:
+      MYSQL_ROOT_PASSWORD: satochat
+      MYSQL_DATABASE: satochat
+      MYSQL_USER: satochat
+      MYSQL_PASSWORD: satochat

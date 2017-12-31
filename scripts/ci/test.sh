@@ -1,25 +1,24 @@
 #!/bin/sh
 
 finish() {
-    echo "Stopping container $containerName..."
-    docker stop "$containerName" > /dev/null || true
+    echo "Stopping containers..."
+    docker-compose -f docker-compose.yml -f docker-compose.ci.test.yml down > /dev/null || true
 }
 
 trap finish EXIT
 
+# These must match values in docker-compose*.yml
 httpPort=5000
-dbProvider=sqlite
-connectionString='Data Source=satochat.sqlite'
-containerName=satochat-server-test
+appServiceName=app
 
-echo "Performing tests using container $containerName..."
+echo "Performing tests using containers..."
 
-echo "Running container $containerName..."
-docker run --rm --name "$containerName" -d -p "$httpPort:5000" -e SATOCHAT_DB_PROVIDER="$dbProvider" -e SATOCHAT_DB_CONNECTION_STRING="$connectionString" "$DOCKER_TAG" || exit 1
+echo "Running containers..."
+docker-compose -f docker-compose.yml -f docker-compose.ci.test.yml up -d
 
 echo 'Waiting for server to start...'
 count=0
-maxTries=30
+maxTries=60
 statusCode=0
 while [ $count -lt $maxTries ]; do
     count=$((count+1))
@@ -33,7 +32,7 @@ done
 
 if [ "$count" = "$maxTries" ]; then
     echo "Aborting after $maxTries tries."
-    docker logs "$containerName"
+    docker-compose logs "$appServiceName"
     exit 1;
 fi
 

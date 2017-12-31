@@ -1,41 +1,33 @@
 #!/bin/sh
 
-containerName=satochat-server
-dbHostName="$SATOCHAT_DB_HOST"
-dbHostLine=$(ssh "$DEPLOY_APPSERVER_SSH_HOST" "host -4 -t A $dbHostName")
-dbHostIp=$(echo $dbHostLine | cut -d ' ' -f 4)
-echo $dbHostIp | grep -P '^(\d{1,3}\.?){4}$' > /dev/null || (echo "IP address ($dbHostIp) for $dbHostName appears to be wrong."; exit 1)
-dbHostMapping="$dbHostName:$dbHostIp"
+finish() {
+    echo "Stopping containers..."
+    if [ ! -z "$remoteTempDir" ]; then
+        rm -rf "$remoteTempDir" > /dev/null || true
+    fi
+}
 
-echo "Database host mapping: $dbHostMapping"
+trap finish EXIT
+
 echo "Deploying to $DEPLOY_APPSERVER_SSH_HOST..."
 
-echo "Pulling image $DOCKER_TAG..."
-ssh "$DEPLOY_APPSERVER_SSH_HOST" "docker pull '$DOCKER_TAG'" || exit 1
+remoteTempDir=$(ssh "$DEPLOY_APPSERVER_SSH_HOST" "mktemp -d") || exit 1
+echo "Remote temporary directory: $remoteTempDir"
 
-ssh "$DEPLOY_APPSERVER_SSH_HOST" "docker ps -q -f name='^/$containerName$'" | grep .
-if [ $? = 0 ]; then
-    echo "Stopping container $containerName..."
-    ssh "$DEPLOY_APPSERVER_SSH_HOST" "docker stop '$containerName'" || exit 1
-fi
+cat docker-compose.ci.prod.yml | envsubst | tee docker-compose.ci.prod.yml
+scp docker-compose.yml docker-compose.ci.prod.yml Dockerfile "$DEPLOY_APPSERVER_SSH_HOST:$remoteTempDir" || exit 1
 
-ssh "$DEPLOY_APPSERVER_SSH_HOST" "docker ps -q -a -f name='^/$containerName$'" | grep .
-if [ $? = 0 ]; then
-    echo "Removing container $containerName..."
-    ssh "$DEPLOY_APPSERVER_SSH_HOST" "docker rm '$containerName'" || exit 1
-fi
+echo "Stopping containers..."
+ssh "$DEPLOY_APPSERVER_SSH_HOST" "cd '$remoteTempDir' && docker-compose -p '$COMPOSE_PROJECT_NAME' -f docker-compose.yml -f docker-compose.ci.prod.yml down" || exit 1
 
-echo "Creating container $containerName..."
-ssh "$DEPLOY_APPSERVER_SSH_HOST" "docker create --restart unless-stopped --name '$containerName' --add-host '$dbHostMapping' -p '$SATOCHAT_HTTP_PORT:5000' -e SATOCHAT_DB_PROVIDER='$SATOCHAT_DB_PROVIDER' -e SATOCHAT_DB_CONNECTION_STRING='$SATOCHAT_DB_CONNECTION_STRING' '$DOCKER_TAG'" || exit 1
-
-echo "Running container $containerName..."
-ssh "$DEPLOY_APPSERVER_SSH_HOST" "docker start '$containerName'" || exit 1
+echo "Running containers..."
+ssh "$DEPLOY_APPSERVER_SSH_HOST" "cd '$remoteTempDir' && docker-compose -p '$COMPOSE_PROJECT_NAME' -f docker-compose.yml -f docker-compose.ci.prod.yml up -d" || exit 1
 
 echo "Performing tests against deployed site ($SATOCHAT_WAN_HOST)..."
 
 echo 'Waiting for server to start...'
 count=0
-maxTries=30
+maxTries=60
 statusCode=0
 while [ $count -lt $maxTries ]; do
     count=$((count+1))

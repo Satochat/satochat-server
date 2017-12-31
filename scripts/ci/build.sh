@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 finish() {
     rm -f "$dockerLog" || true
@@ -7,30 +7,52 @@ finish() {
 trap finish EXIT
 
 scriptDir="$(dirname "$0")"
-dotnetDir=~/docker
-dotnetImagePath="$dotnetDir/dotnet_image.tar"
+imagesDir=~/docker
+dotnetImagePath="$imagesDir/dotnet_image.tar"
 dotnetImageTag="microsoft/dotnet:latest"
+mysqlImagePath="$imagesDir/mysql_image.tar"
+mysqlImageTag="library/mysql:latest"
+imageCount=2
+imagePaths=("$dotnetImagePath" "$mysqlImagePath")
+imageTags=("$dotnetImageTag" "$mysqlImageTag")
+newImages=
 dockerLog="$(mktemp)"
 
 dotnet publish -c Release --version-suffix $("$scriptDir/version-suffix.sh") || exit 1
-if [ -e "$dotnetImagePath" ]; then
-    echo "Loading image from $dotnetImagePath..."
-    docker load -i "$dotnetImagePath" || exit 1
-fi
 
-echo "Pulling image $dotnetImageTag..."
-docker pull "$dotnetImageTag" | tee "$dockerLog" || exit 1
+# Load cached images
+for ((i = 0; i < $imageCount; ++i)); do
+    imagePath=${imagePaths[$i]}
+    if [ -e "$imagePath" ]; then
+        echo "Loading image from $imagePath..."
+        docker load -i "$imagePath" || exit 1
+    fi
+done
 
-newDotnetImage=0
-cat "$dockerLog" | grep "Downloaded newer image for $dotnetImageTag" > /dev/null && newDotnetImage=1
+# Pull/Update images
+for ((i = 0; i < $imageCount; ++i)); do
+    imageTag=${imageTags[$i]}
 
-echo "Building image $DOCKER_TAG..."
-docker build -t "$DOCKER_TAG" . || exit 1
+    echo "Pulling image $imageTag..."
+    docker pull "$imageTag" | tee "$dockerLog" || exit 1
 
-if [ "$newDotnetImage" = "1" ]; then
-    echo "Saving image for $dotnetImageTag to $dotnetImagePath..."
-    if [ ! -e "$dotnetDir" ]; then mkdir -p "$dotnetDir" || exit 1; fi
-    docker save microsoft/dotnet -o "$dotnetImagePath" || exit 1
-fi
+    newImages[$i]=0
+    cat "$dockerLog" | grep "Downloaded newer image for $imageTag" > /dev/null && newDotnetImage=1
+done
+
+echo "Building image..."
+docker-compose build || exit 1
+
+# Save images in order to cache them
+for ((i = 0; i < $imageCount; ++i)); do
+    imagePath=${imagePaths[$i]}
+    imageTag=${imageTags[$i]}
+    newImage=${newImages[$i]}
+    if [ "$newImage" = "1" ]; then
+        echo "Saving image for $imageTag to $imagePath..."
+        if [ ! -e "$imagesDir" ]; then mkdir -p "$imagesDir" || exit 1; fi
+        docker save "$imageTag" -o "$imagePath" || exit 1
+    fi
+done
 
 echo 'Build succeeded.'
