@@ -15,13 +15,16 @@ remoteTempDir=$(ssh "$DEPLOY_APPSERVER_SSH_HOST" "mktemp -d") || exit 1
 echo "Remote temporary directory: $remoteTempDir"
 
 cat docker-compose.ci.prod.yml | envsubst | tee docker-compose.ci.prod.yml
-scp docker-compose.yml docker-compose.ci.prod.yml Dockerfile "$DEPLOY_APPSERVER_SSH_HOST:$remoteTempDir" || exit 1
+scp docker-compose.yml docker-compose.ci.prod.yml Dockerfile* "$DEPLOY_APPSERVER_SSH_HOST:$remoteTempDir" || exit 1
 
 echo "Stopping containers..."
 ssh "$DEPLOY_APPSERVER_SSH_HOST" "cd '$remoteTempDir' && docker-compose -p '$COMPOSE_PROJECT_NAME' -f docker-compose.yml -f docker-compose.ci.prod.yml down" || exit 1
 
+echo "Pulling images..."
+ssh "$DEPLOY_APPSERVER_SSH_HOST" "cd '$remoteTempDir' && docker-compose -p '$COMPOSE_PROJECT_NAME' -f docker-compose.yml -f docker-compose.ci.prod.yml pull" || exit 1
+
 echo "Running containers..."
-ssh "$DEPLOY_APPSERVER_SSH_HOST" "cd '$remoteTempDir' && docker-compose -p '$COMPOSE_PROJECT_NAME' -f docker-compose.yml -f docker-compose.ci.prod.yml up -d" || exit 1
+ssh "$DEPLOY_APPSERVER_SSH_HOST" "cd '$remoteTempDir' && docker-compose -p '$COMPOSE_PROJECT_NAME' -f docker-compose.yml -f docker-compose.ci.prod.yml up -d --no-build" || exit 1
 
 echo "Performing tests against deployed site ($SATOCHAT_WAN_HOST)..."
 

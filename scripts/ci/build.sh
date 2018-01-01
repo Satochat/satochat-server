@@ -37,11 +37,11 @@ for ((i = 0; i < $imageCount; ++i)); do
     docker pull "$imageTag" | tee "$dockerLog" || exit 1
 
     newImages[$i]=0
-    cat "$dockerLog" | grep "Downloaded newer image for $imageTag" > /dev/null && newDotnetImage=1
+    cat "$dockerLog" | grep "Downloaded newer image for $imageTag" > /dev/null && newImages[$i]=1
 done
 
 echo "Building image..."
-docker-compose build || exit 1
+docker-compose -f docker-compose.yml -f docker-compose.ci.prod.yml build || exit 1
 
 # Save images in order to cache them
 for ((i = 0; i < $imageCount; ++i)); do
